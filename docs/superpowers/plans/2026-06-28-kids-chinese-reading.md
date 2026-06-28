@@ -6,7 +6,24 @@
 
 **Architecture:** An offline Python script decodes the PDF's pinyin font-cipher into a static `src/data/lessons.json`. The Next.js app statically renders lesson content and tracks all progress client-side in localStorage. Pure progress logic is isolated from React/storage for testability.
 
-**Tech Stack:** Next.js 16 (App Router), React 19, TypeScript 5 (strict), Tailwind CSS v4, pnpm. Pipeline: Python 3 + PyMuPDF + pypinyin. Tests: Vitest + Testing Library (jsdom) for TS; pytest for Python.
+**Tech Stack:** Next.js 16 (App Router), React 19, TypeScript 5 (strict), Tailwind CSS v4, pnpm. Pipeline: Python 3 + PyMuPDF + pypinyin. Tests: Vitest + Testing Library (jsdom) for TS unit/component, pytest for the Python pipeline, **Playwright for real-browser integration/E2E** (Tasks 7 & 9).
+
+## Execution Protocol (subagent-driven, per-task review gate)
+
+Every task is executed by a **fresh implementer subagent**, then verified by a **separate reviewer subagent** before the next task starts. No task is considered done until its reviewer passes.
+
+1. **Implementer subagent** — given the single task, implements its steps (TDD), runs that task's own tests to green, and commits.
+2. **Reviewer subagent** (different agent, fresh context) — receives the task spec + the diff and MUST:
+   - **Re-run the task's tests itself** and paste real output (do not trust the implementer's claim):
+     - Vitest tasks: `pnpm test <file>` → all pass.
+     - Python task: `.pdfvenv/bin/pytest scripts/test_extract_lessons.py -v` → all pass.
+     - Playwright tasks: `pnpm test:e2e <spec>` → all pass.
+     - Build-touching tasks (7, 9): `pnpm build` succeeds.
+   - **Code-review** against the task's Files/Interfaces and the Global Constraints (correctness, types match neighboring tasks, no scope creep, follows existing patterns).
+   - Return a verdict: **PASS** (with pasted test output) or **CHANGES NEEDED** (specific, actionable). On CHANGES NEEDED, the implementer fixes and the reviewer re-checks.
+3. Only after a PASS does the orchestrator proceed to (or unblock) the next task.
+
+Tests are evidence: a reviewer claiming PASS without pasted command output is itself a CHANGES-NEEDED condition.
 
 ## Global Constraints
 
@@ -59,6 +76,10 @@ src/
     lesson/[id]/page.tsx        # reading screen (server content + client controls)
 vitest.config.ts                # alias + jsdom env
 vitest.setup.ts                 # jest-dom matchers
+playwright.config.ts            # E2E config (webServer: pnpm dev)
+e2e/
+  reading.spec.ts               # Task 7: reading flow (pinyin, mark-read, unlock, lock-guard)
+  home.spec.ts                  # Task 9: home dashboard + full read-through flow
 ```
 
 ---
@@ -66,22 +87,24 @@ vitest.setup.ts                 # jest-dom matchers
 ### Task 1: Test tooling + Python pipeline deps
 
 **Files:**
-- Create: `vitest.config.ts`, `vitest.setup.ts`, `scripts/requirements.txt`, `scripts/README.md`
-- Modify: `package.json` (add `test` script + dev deps), `src/app/layout.tsx`, `src/app/globals.css`
+- Create: `vitest.config.ts`, `vitest.setup.ts`, `playwright.config.ts`, `scripts/requirements.txt`, `scripts/README.md`
+- Modify: `package.json` (add `test`/`test:e2e` scripts + dev deps), `.gitignore` (Playwright artifacts), `src/app/layout.tsx`, `src/app/globals.css`
 
 **Interfaces:**
-- Produces: a working `pnpm test` (Vitest, jsdom, `@/*` alias, jest-dom matchers); a documented Python env for the pipeline; global CJK + ruby styling.
+- Produces: a working `pnpm test` (Vitest, jsdom, `@/*` alias, jest-dom matchers, scoped to `src/`); a working `pnpm test:e2e` (Playwright, auto-starts dev server); a documented Python env for the pipeline; global CJK + ruby styling.
 
-- [ ] **Step 1: Install TS test deps**
+- [ ] **Step 1: Install TS test + E2E deps**
 
 Run:
 ```bash
-pnpm add -D vitest@^2 jsdom @testing-library/react @testing-library/jest-dom @vitejs/plugin-react
+pnpm add -D vitest@^2 jsdom @testing-library/react @testing-library/jest-dom @vitejs/plugin-react @playwright/test
+pnpm exec playwright install chromium
 ```
-Expected: deps added to `package.json` devDependencies.
+Expected: deps added to `package.json` devDependencies; Chromium browser downloaded.
 
 - [ ] **Step 2: Create `vitest.config.ts`**
 
+Vitest is scoped to `src/` so it never picks up Playwright's `e2e/*.spec.ts` files.
 ```ts
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
@@ -93,6 +116,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    exclude: ["e2e/**", "node_modules/**"],
   },
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
@@ -106,15 +131,42 @@ export default defineConfig({
 import "@testing-library/jest-dom/vitest";
 ```
 
-- [ ] **Step 4: Add `test` script to `package.json`**
+- [ ] **Step 4: Add scripts to `package.json`**
 
 In the `"scripts"` block add:
 ```json
 "test": "vitest run",
-"test:watch": "vitest"
+"test:watch": "vitest",
+"test:e2e": "playwright test"
 ```
 
-- [ ] **Step 5: Sanity test that tooling runs**
+- [ ] **Step 5: Create `playwright.config.ts`**
+
+Playwright auto-starts the Next dev server and runs specs from `e2e/`. Each test gets a fresh browser context (clean `localStorage`), which is exactly what the unlock/progress flows need.
+```ts
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./e2e",
+  fullyParallel: true,
+  use: { baseURL: "http://localhost:3000", trace: "on-first-retry" },
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  webServer: {
+    command: "pnpm dev",
+    url: "http://localhost:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
+});
+```
+Then append Playwright artifacts to `.gitignore`:
+```
+/test-results/
+/playwright-report/
+/.playwright/
+```
+
+- [ ] **Step 6: Sanity test that both runners work**
 
 Create a throwaway `src/lib/_smoke.test.ts`:
 ```ts
@@ -124,7 +176,18 @@ test("tooling works", () => { expect(1 + 1).toBe(2); });
 Run: `pnpm test`
 Expected: PASS. Then delete `src/lib/_smoke.test.ts`.
 
-- [ ] **Step 6: Add CJK font fallback + ruby styling**
+Create a throwaway `e2e/_smoke.spec.ts`:
+```ts
+import { test, expect } from "@playwright/test";
+test("dev server boots", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("body")).toBeVisible();
+});
+```
+Run: `pnpm test:e2e _smoke`
+Expected: PASS (Playwright boots `pnpm dev` and loads `/`). Then delete `e2e/_smoke.spec.ts`.
+
+- [ ] **Step 7: Add CJK font fallback + ruby styling**
 
 In `src/app/globals.css`, append:
 ```css
@@ -142,7 +205,7 @@ rt {
 ```
 In `src/app/layout.tsx`, ensure `<body>` (or a wrapping element) includes the `cjk` class so Chinese glyphs use the CJK stack. (Add `className="cjk ..."` to the existing body/wrapper; keep existing classes.)
 
-- [ ] **Step 7: Create Python pipeline deps + README**
+- [ ] **Step 8: Create Python pipeline deps + README**
 
 `scripts/requirements.txt`:
 ```
@@ -170,11 +233,11 @@ samples; it never overrides the textbook's own readings. Any token with an
 undecoded substitute character is logged and causes a non-zero exit.
 ```
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add vitest.config.ts vitest.setup.ts package.json pnpm-lock.yaml src/app/globals.css src/app/layout.tsx scripts/requirements.txt scripts/README.md
-git commit -m "chore: add vitest tooling, CJK/ruby styles, python pipeline deps"
+git add vitest.config.ts vitest.setup.ts playwright.config.ts package.json pnpm-lock.yaml .gitignore src/app/globals.css src/app/layout.tsx scripts/requirements.txt scripts/README.md
+git commit -m "chore: add vitest + playwright tooling, CJK/ruby styles, python pipeline deps"
 ```
 
 ---
@@ -813,11 +876,11 @@ git commit -m "feat: RubyText component for pinyin-over-character rendering"
 ### Task 7: Reading screen `/lesson/[id]`
 
 **Files:**
-- Create: `src/app/lesson/[id]/page.tsx`, `src/components/reading/MarkReadControls.tsx`
+- Create: `src/app/lesson/[id]/page.tsx`, `src/components/reading/MarkReadControls.tsx`, `e2e/reading.spec.ts`
 
 **Interfaces:**
 - Consumes: `getAllLessons`, `getLesson`; `RubyText`; `useProgress`, `isUnlocked` from `@/lib/progress`; `Button`.
-- Produces: a statically-generated reading route; `MarkReadControls({ id, nextId })` client component.
+- Produces: a statically-generated reading route; `MarkReadControls({ id, nextId })` client component; Playwright coverage of the reading/unlock flow.
 
 - [ ] **Step 1: Create the client controls (mark-as-read + lock guard)**
 
@@ -910,11 +973,47 @@ Expected: build succeeds; `/lesson/[id]` listed as statically generated (SSG) wi
 
 Run: `pnpm dev`, open `/lesson/1`. Expected: title, author (if any), passage with pinyin above characters, two buttons. Click 读完了 → routes to `/lesson/2`. Open `/lesson/3` directly with empty progress → redirects to `/`. Open `/lesson/99999` → 404.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Write Playwright integration test for the reading flow**
+
+`e2e/reading.spec.ts` — each test runs in a fresh context (empty `localStorage`), so only lesson 1 starts unlocked.
+```ts
+import { test, expect } from "@playwright/test";
+
+test("lesson 1 shows pinyin above characters", async ({ page }) => {
+  await page.goto("/lesson/1");
+  // ruby <rt> elements carry the pinyin
+  await expect(page.locator("rt").first()).toBeVisible();
+  expect(await page.locator("rt").count()).toBeGreaterThan(0);
+  await expect(page.getByRole("button", { name: "读完了" })).toBeVisible();
+});
+
+test("marking read advances to lesson 2", async ({ page }) => {
+  await page.goto("/lesson/1");
+  await page.getByRole("button", { name: "读完了" }).click();
+  await expect(page).toHaveURL(/\/lesson\/2$/);
+});
+
+test("a locked lesson redirects home", async ({ page }) => {
+  await page.goto("/lesson/3"); // id-2 not read in a fresh context
+  await expect(page).toHaveURL("/");
+});
+
+test("an invalid lesson id 404s", async ({ page }) => {
+  const res = await page.goto("/lesson/99999");
+  expect(res?.status()).toBe(404);
+});
+```
+
+- [ ] **Step 6: Run the integration test, verify it passes**
+
+Run: `pnpm test:e2e reading`
+Expected: all 4 tests PASS (Playwright auto-starts `pnpm dev`). If the locked-redirect test flakes, confirm `MarkReadControls` waits for `loaded` before deciding (it must not redirect during the initial empty state on an unlocked lesson).
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/app/lesson src/components/reading/MarkReadControls.tsx
-git commit -m "feat: reading screen with mark-as-read and sequential-unlock guard"
+git add src/app/lesson src/components/reading/MarkReadControls.tsx e2e/reading.spec.ts
+git commit -m "feat: reading screen with mark-as-read, unlock guard, and e2e coverage"
 ```
 
 ---
@@ -1098,7 +1197,7 @@ git commit -m "feat: home dashboard presentational components"
 ### Task 9: Dashboard orchestrator + Home page
 
 **Files:**
-- Create: `src/components/home/Dashboard.tsx`
+- Create: `src/components/home/Dashboard.tsx`, `e2e/home.spec.ts`
 - Modify (replace marketing content): `src/app/page.tsx`
 
 **Interfaces:**
@@ -1180,11 +1279,55 @@ Expected: build succeeds (`/` and `/lesson/[id]` static); all tests pass.
 
 Run: `pnpm dev`, open `/`. Expected: completion bar at 0/N, streak 0, empty heatmap, Continue card → 课文 1, lesson grid with lesson 1 unlocked and the rest locked. Click Continue → read → 读完了 → returns/advances; back on `/` completion increments, lesson 2 now unlocked, today's heatmap cell filled, streak 1. Reload page → state persists.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Write Playwright integration test for the full home flow**
+
+`e2e/home.spec.ts` — fresh context each test (empty `localStorage`).
+```ts
+import { test, expect } from "@playwright/test";
+
+test("home starts empty, reading a lesson updates progress + streak", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText(/读完 0 \//)).toBeVisible();
+  await expect(page.getByText("继续阅读")).toBeVisible();
+
+  // open the next-up lesson via its grid/continue link, then finish it
+  await page.locator('a[href="/lesson/1"]').first().click();
+  await expect(page).toHaveURL(/\/lesson\/1$/);
+  await page.getByRole("button", { name: "读完了" }).click();
+
+  // back home: completion advanced, today counted toward the streak
+  await page.goto("/");
+  await expect(page.getByText(/读完 1 \//)).toBeVisible();
+  await expect(page.getByText("连续 1 天")).toBeVisible();
+  // lesson 2 is now an unlocked link
+  await expect(page.locator('a[href="/lesson/2"]')).toHaveCount(1);
+});
+
+test("progress persists across a reload", async ({ page }) => {
+  await page.goto("/lesson/1");
+  await page.getByRole("button", { name: "读完了" }).click();
+  await page.goto("/");
+  await expect(page.getByText(/读完 1 \//)).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(/读完 1 \//)).toBeVisible();
+});
+```
+
+- [ ] **Step 6: Run the integration test, verify it passes**
+
+Run: `pnpm test:e2e home`
+Expected: both tests PASS. If `读完 1` isn't found, confirm `Dashboard` waits for `loaded` before rendering counts (the skeleton must resolve to real values after mount).
+
+- [ ] **Step 7: Run the full suite (unit + e2e) + build**
+
+Run: `pnpm build && pnpm test && pnpm test:e2e`
+Expected: build succeeds (`/` and `/lesson/[id]` static); all Vitest and all Playwright tests pass.
+
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/components/home/Dashboard.tsx src/app/page.tsx
-git commit -m "feat: home dashboard with progress, continue, heatmap, lesson grid"
+git add src/components/home/Dashboard.tsx src/app/page.tsx e2e/home.spec.ts
+git commit -m "feat: home dashboard with progress, continue, heatmap, lesson grid + e2e"
 ```
 
 ---
@@ -1194,4 +1337,5 @@ git commit -m "feat: home dashboard with progress, continue, heatmap, lesson gri
 - **Spec coverage:** content scope 课文-only (Task 2 `find_lessons` filter) · decode textbook pinyin (Task 2) · data model (Task 3) · ruby pinyin (Task 6) · mark-as-read + sequential unlock (Tasks 5/7) · Home completion/continue/grid/streak/heatmap (Tasks 8/9) · localStorage no-login (Task 5) · CJK font (Task 1) · key `kids-reading:progress:v1` (Tasks 5) — all mapped.
 - **Defaults from spec honored:** per-lesson completion, 90-day heatmap window, offer-next-lesson after read.
 - **Type consistency:** `Progress`, `HeatCell`, `Token`, `Lesson`, and all function signatures are defined in Tasks 3–4 and consumed unchanged in Tasks 5–9.
+- **Test coverage:** every task ships tests — pytest (Task 2), Vitest unit/component (Tasks 3,4,5,6,8), Playwright integration (Tasks 7,9). Per the Execution Protocol, a separate reviewer subagent re-runs each task's tests (pasting real output) and code-reviews before the next task starts.
 - **Risk:** Task 2 extraction is the highest-uncertainty work (PDF layout/cipher); it has its own pytest for the decode core, a build-fail-on-gap guard, and a manual spot-check step before its data is committed.
