@@ -158,3 +158,15 @@
     color: var(--color-on-primary);
   }
 }
+
+:root {
+  --font-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+ruby { ruby-position: over; }
+rt {
+  font-size: 0.4em;
+  color: #737373;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.cjk { font-family: var(--font-cjk); }
