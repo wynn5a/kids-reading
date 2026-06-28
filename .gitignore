@@ -51,3 +51,6 @@ next-env.d.ts
 # os
 .DS_Store
 Thumbs.db
+
+# Local Python venv for the content pipeline
+.pdfvenv/
