@@ -25,6 +25,8 @@ Every task is executed by a **fresh implementer subagent**, then verified by a *
 
 Tests are evidence: a reviewer claiming PASS without pasted command output is itself a CHANGES-NEEDED condition.
 
+**Isolation strategy.** Parallel tasks within a wave touch disjoint file paths, so implementers work in the **main working tree** and the orchestrator **serializes git commits** (commit each task only after its reviewer passes) — no per-task worktrees, no `node_modules`/Playwright/dev-server-port duplication. **Exception: Task 2** (the exploratory PDF pipeline) runs in its **own isolation worktree** (`isolation: "worktree"`) so its scratch artifacts (`.pdfvenv`, trial output) never touch the main tree; its deliverables (`scripts/*.py`, `src/data/lessons.json`) are brought back to main on reviewer PASS.
+
 ## Global Constraints
 
 - No backend, no auth, no network at runtime — content is a committed static JSON; progress lives only in `localStorage`.
