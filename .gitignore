@@ -54,3 +54,6 @@ Thumbs.db
 
 # Local Python venv for the content pipeline
 .pdfvenv/
+
+# SDD scratch (ledger, briefs, reports, diffs)
+.superpowers/
