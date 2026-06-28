@@ -65,3 +65,7 @@ Thumbs.db
 
 # Agent worktrees
 .claude/worktrees/
+
+# Python cache
+__pycache__/
+*.pyc
