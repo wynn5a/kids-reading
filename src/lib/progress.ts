@@ -19,6 +19,19 @@ export function learnedCharCount(lessons: Lesson[], readLessonIds: number[]): nu
   return set.size;
 }
 
+const CHEERS = [
+  "太棒了！继续加油！",
+  "读得真好！",
+  "你真厉害！",
+  "又学会一课啦！",
+];
+
+/** A cheerful line for the summary card. Finale message at 100% / last lesson. */
+export function celebrationMessage(pct: number, isLast: boolean): string {
+  if (isLast || pct >= 100) return "全部读完啦！你太了不起了！";
+  return CHEERS[pct % CHEERS.length];
+}
+
 export function isUnlocked(id: number, readLessonIds: number[]): boolean {
   return id === 1 || readLessonIds.includes(id - 1);
 }

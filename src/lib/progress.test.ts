@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import {
   EMPTY_PROGRESS, isUnlocked, nextLessonId, completion, markRead,
-  currentStreak, heatmapCells, toISO, fromISO, learnedCharCount,
+  currentStreak, heatmapCells, toISO, fromISO, learnedCharCount, celebrationMessage,
 } from "@/lib/progress";
 import type { Lesson } from "@/data/types";
 
@@ -80,5 +80,21 @@ describe("learnedCharCount", () => {
 
   it("ignores unread lessons", () => {
     expect(learnedCharCount(lessons, [2])).toBe(2); // 小 马
+  });
+});
+
+describe("celebrationMessage", () => {
+  it("returns the finale message when finishing the last lesson", () => {
+    expect(celebrationMessage(100, true)).toBe("全部读完啦！你太了不起了！");
+  });
+
+  it("returns the finale message at 100% even if not flagged last", () => {
+    expect(celebrationMessage(100, false)).toBe("全部读完啦！你太了不起了！");
+  });
+
+  it("returns a non-empty, stable message otherwise", () => {
+    const m = celebrationMessage(40, false);
+    expect(m.length).toBeGreaterThan(0);
+    expect(celebrationMessage(40, false)).toBe(m); // deterministic
   });
 });
