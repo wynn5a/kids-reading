@@ -49,7 +49,7 @@ export function LessonSummary({
       aria-label="本课小结"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6"
     >
-      <Card className="animate-pop-in w-full max-w-md rounded-xl p-8 text-center">
+      <Card className="animate-pop-in w-full max-w-[28rem] rounded-xl p-8 text-center">
         <div className="flex justify-center">
           {isLast ? (
             <Trophy className="h-14 w-14" strokeWidth={1.5} />
