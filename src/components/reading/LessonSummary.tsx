@@ -60,7 +60,12 @@ export function LessonSummary({
 
         <div className="mt-4 flex justify-center gap-2">
           {[0, 1, 2].map((i) => (
-            <Star key={i} className="animate-star-bounce h-6 w-6 fill-current" strokeWidth={1.5} />
+            <Star
+              key={i}
+              className="animate-star-joy h-7 w-7 fill-current text-[#facc15]"
+              strokeWidth={1.5}
+              style={{ animationDelay: `${i * 0.14}s` }}
+            />
           ))}
         </div>
 
