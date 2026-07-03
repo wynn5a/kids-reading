@@ -3,6 +3,22 @@ import type { Lesson } from "@/data/types";
 export type Progress = { readLessonIds: number[]; activity: Record<string, number> };
 export const EMPTY_PROGRESS: Progress = { readLessonIds: [], activity: {} };
 
+const CJK = /[一-鿿]/;
+
+/** Count of distinct CJK characters across every read lesson. */
+export function learnedCharCount(lessons: Lesson[], readLessonIds: number[]): number {
+  const set = new Set<string>();
+  for (const l of lessons) {
+    if (!readLessonIds.includes(l.id)) continue;
+    for (const line of l.lines) {
+      for (const t of line) {
+        if (CJK.test(t.char)) set.add(t.char);
+      }
+    }
+  }
+  return set.size;
+}
+
 export function isUnlocked(id: number, readLessonIds: number[]): boolean {
   return id === 1 || readLessonIds.includes(id - 1);
 }

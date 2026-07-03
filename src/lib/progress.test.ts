@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import {
   EMPTY_PROGRESS, isUnlocked, nextLessonId, completion, markRead,
-  currentStreak, heatmapCells, toISO, fromISO,
+  currentStreak, heatmapCells, toISO, fromISO, learnedCharCount,
 } from "@/lib/progress";
 import type { Lesson } from "@/data/types";
 
@@ -52,4 +52,33 @@ test("heatmapCells returns `days` cells ending today, oldest first", () => {
 
 test("date helpers round-trip local dates", () => {
   expect(toISO(fromISO("2026-06-28"))).toBe("2026-06-28");
+});
+
+function lesson(id: number, chars: string[][]): Lesson {
+  return {
+    id,
+    number: String(id),
+    title: "t",
+    lines: chars.map((line) => line.map((c) => ({ char: c, pinyin: "" }))),
+  };
+}
+
+describe("learnedCharCount", () => {
+  const lessons = [
+    lesson(1, [["小", "牛", "。"]]),
+    lesson(2, [["小", "马", "，"]]), // 小 repeats; 。， are punctuation
+  ];
+
+  it("counts distinct CJK characters across read lessons", () => {
+    expect(learnedCharCount(lessons, [1, 2])).toBe(3); // 小 牛 马
+  });
+
+  it("excludes punctuation and empty when nothing read", () => {
+    expect(learnedCharCount(lessons, [1])).toBe(2); // 小 牛 (not 。)
+    expect(learnedCharCount(lessons, [])).toBe(0);
+  });
+
+  it("ignores unread lessons", () => {
+    expect(learnedCharCount(lessons, [2])).toBe(2); // 小 马
+  });
 });
