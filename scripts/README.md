@@ -24,6 +24,21 @@ by `tts-plan.test.mjs` (runs under `pnpm test`). Clip text uses the app's own
 `lineText` from `src/data/line-text.ts` — a single definition for what a line
 "says", shared by page and audio.
 
+## 多音字 pronunciation check
+
+The TTS engine guesses 多音字 readings itself and can contradict the
+textbook's pinyin (e.g. 尾巴长 read as zhǎng). MiMo has no pinyin markup, so
+mispronunciations are fixed by swapping in a same-sound homophone in
+`src/data/tts-overrides.json` (spoken only — the page still shows the real
+text): 长→常, 呱→瓜, 撒→洒, 待→呆.
+
+    .pdfvenv/bin/python scripts/check_tts_pinyin.py
+
+prints every char where the textbook pinyin differs from a TTS-style guess —
+`✗ LISTEN` rows lack an override and should be listened to after lesson text
+changes. 一/不 sandhi and interjection tones are listed separately (engines
+handle those natively).
+
 ## Test
     .pdfvenv/bin/pytest scripts/test_extract_lessons.py -v
 
