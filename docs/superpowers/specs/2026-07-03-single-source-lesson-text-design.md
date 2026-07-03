@@ -79,7 +79,25 @@ synthesis, so a no-op sync check runs anywhere.
   scripts/extract_lessons.py`)
 - `pnpm gen` — `gen:lessons` then `gen:tts`; the full PDF→page+audio sync
 
-### 5. Docs
+### 5. Reflow rules made sound (discovered during implementation)
+
+Running the extraction end-to-end revealed the committed `lessons.json` had
+been hand-edited (b5021ed merged a line the reflow had split after a dangling
+`个“`) — the exact drift this spec eliminates. Rather than preserving hand
+edits, the reflow rules in `scripts/reflow_lesson_lines.py` were fixed so the
+extraction alone produces sound typography:
+
+- `“` removed from valid line-end characters — a line never ends with a
+  dangling opening quote; splits like `…回答：` / `“我要去…”` now put the
+  quote with the quoted text.
+- A comma-ended physical row merges with the next row only when it is
+  full-width (≥13 chars, i.e. the page forced the wrap); short comma rows are
+  the book's own poem lines (雨点儿, 青蛙写诗's frog poem) and are kept.
+- Long lines split preferring the latest *sentence* end (。！？… incl. a
+  closing quote after them) that fits, falling back to any punctuation — so
+  `大海，蓝蓝的，又宽又远。沙滩，…` breaks at the 。, not after 沙滩，.
+
+### 6. Docs
 
 CLAUDE.md and `scripts/README.md` describe the chain and the rule that
 `lessons.json` is generated, not edited.

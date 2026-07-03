@@ -6,8 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "gen:lessons": ".pdfvenv/bin/python scripts/extract_lessons.py",
+    "gen": "pnpm gen:lessons && pnpm gen:tts",
     "lint": "eslint",
-    "gen:tts": "node scripts/gen-tts.mjs",
+    "gen:tts": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-tts.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"

@@ -1,11 +1,28 @@
 # Content pipeline
 
-Extracts 课文 from `pdf/义务教育教科书·语文一年级上册.pdf` into `src/data/lessons.json`.
+The PDF is the single source of truth for lesson text **and** pinyin:
+
+    PDF → extract_lessons.py → src/data/lessons.json → page render (RubyText)
+                                                     → gen-tts.mjs → MP3 per line
+
+`lessons.json` and `audio-manifest.json` are generated — never hand-edit them.
 
 ## Run
+
+One-time setup, then `pnpm gen` (or `pnpm gen:lessons` for extraction alone):
+
     python3 -m venv .pdfvenv
     .pdfvenv/bin/pip install -r scripts/requirements.txt
-    .pdfvenv/bin/python scripts/extract_lessons.py
+    pnpm gen
+
+## TTS sync
+
+`pnpm gen:tts` re-synthesizes a clip only when its MP3 is missing or its text
+differs from what `audio-manifest.json` recorded (content-aware; `--force`
+redoes all). The decision logic is `planClips` in `tts-plan.mjs`, unit-tested
+by `tts-plan.test.mjs` (runs under `pnpm test`). Clip text uses the app's own
+`lineText` from `src/data/line-text.ts` — a single definition for what a line
+"says", shared by page and audio.
 
 ## Test
     .pdfvenv/bin/pytest scripts/test_extract_lessons.py -v

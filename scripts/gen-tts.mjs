@@ -3,15 +3,21 @@
  * Pre-generate line-by-line TTS audio for every lesson using Xiaomi MiMo
  * (mimo-v2.5-tts). One MP3 per visual line at public/audio/<id>-<line>.mp3.
  *
- *   pnpm gen:tts            # synthesize missing clips
+ *   pnpm gen:tts            # synthesize missing/out-of-date clips
  *   pnpm gen:tts --force    # re-synthesize everything
  *
- * Requires MIMO_API_KEY (read from process.env or .env.local) and ffmpeg on PATH.
+ * The text of every clip comes from lessons.json (itself generated from the
+ * textbook PDF) via the same lineText the app uses; a clip is regenerated
+ * whenever its text no longer matches what audio-manifest.json recorded.
+ *
+ * Requires MIMO_API_KEY (process.env or .env.local) and ffmpeg on PATH —
+ * only when at least one clip actually needs synthesizing.
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { planClips } from "./tts-plan.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIO_DIR = join(ROOT, "public", "audio");
@@ -20,7 +26,7 @@ const MANIFEST = join(ROOT, "src", "data", "audio-manifest.json");
 const API_URL = "https://api.xiaomimimo.com/v1/chat/completions";
 const MODEL = "mimo-v2.5-tts";
 const VOICE = "茉莉";
-const STYLE = "语速稍慢，吐字清晰，温柔亲切，适合读给小朋友听";
+const STYLE = "语速稍慢，吐字清晰，发音标准的普通话，温柔亲切，适合读给小朋友听";
 
 const FORCE = process.argv.includes("--force");
 
@@ -42,14 +48,8 @@ function loadEnvLocal() {
 loadEnvLocal();
 
 const API_KEY = process.env.MIMO_API_KEY;
-if (!API_KEY) {
-  console.error("Missing MIMO_API_KEY (set it in .env.local or the environment).");
-  process.exit(1);
-}
 
 // --- helpers -----------------------------------------------------------------
-const lineText = (line) => line.map((t) => t.char).join("");
-
 function extractBase64(json) {
   const msg = json?.choices?.[0]?.message;
   const audio = msg?.audio;
@@ -113,31 +113,37 @@ const lessons = JSON.parse(readFileSync(join(ROOT, "src", "data", "lessons.json"
 const overrides = JSON.parse(readFileSync(join(ROOT, "src", "data", "tts-overrides.json"), "utf8"));
 mkdirSync(AUDIO_DIR, { recursive: true });
 
-// Build the full work list (so the manifest is complete even when clips exist).
-const clips = [];
-for (const lesson of lessons) {
-  lesson.lines.forEach((line, i) => {
-    const key = `${lesson.id}-${i}`;
-    const text = (overrides[key] ?? lineText(line)).trim();
-    if (text) clips.push({ key, text, out: join(AUDIO_DIR, `${key}.mp3`) });
-  });
+// Plan the full clip list (so the manifest is complete even when clips exist);
+// a clip is up to date only if its MP3 exists AND its text hasn't changed.
+const prevManifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, "utf8")) : {};
+const clips = planClips({
+  lessons,
+  overrides,
+  prevManifest,
+  hasClip: (key) => existsSync(join(AUDIO_DIR, `${key}.mp3`)),
+  force: FORCE,
+});
+
+if (clips.some((c) => c.action === "synth") && !API_KEY) {
+  console.error("Missing MIMO_API_KEY (set it in .env.local or the environment).");
+  process.exit(1);
 }
 
 const manifest = {};
 let made = 0;
 let skipped = 0;
 for (let n = 0; n < clips.length; n++) {
-  const { key, text, out } = clips[n];
+  const { key, text, action } = clips[n];
   manifest[key] = { text };
   const tag = `[${n + 1}/${clips.length}] ${key}`;
-  if (!FORCE && existsSync(out)) {
+  if (action === "skip") {
     skipped++;
-    console.log(`${tag} skip (exists)  ${text}`);
+    console.log(`${tag} skip (up to date)  ${text}`);
     continue;
   }
   process.stdout.write(`${tag} …  ${text}\n`);
   const wav = await synthesize(text);
-  await wavToMp3(wav, out);
+  await wavToMp3(wav, join(AUDIO_DIR, `${key}.mp3`));
   made++;
 }
 

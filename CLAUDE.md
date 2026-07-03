@@ -2,6 +2,23 @@
 
 Kids' Chinese reading app (Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4). Lessons are extracted from a PDF into `src/data/lessons.json`; progress lives in `localStorage`.
 
+## Single source of truth: the textbook PDF
+
+Text **and** pinyin both come from `pdf/义务教育教科书·语文一年级上册.pdf` — the
+book's own printed pinyin is authoritative (轻声, 儿化 like 会→`huìr`/儿→`""`,
+and the deliberately pinyin-free passages in lesson 14). The chain:
+
+```
+PDF → scripts/extract_lessons.py → src/data/lessons.json → page render (RubyText)
+                                                         → TTS clips (same tokens)
+```
+
+`src/data/lessons.json` and `src/data/audio-manifest.json` are **generated —
+never hand-edit them**. To change what's displayed/spoken, fix the extraction
+and run `pnpm gen` (= `gen:lessons` + `gen:tts`); for pronunciation-only fixes
+use `tts-overrides.json`. TTS regeneration is content-aware, so only lines
+whose text actually changed are re-synthesized.
+
 ## Styling gotcha: Tailwind size-name collision (important)
 
 `src/app/globals.css` defines a **named spacing scale** in its `@theme` block:
@@ -25,9 +42,11 @@ expecting a container width. Use an explicit arbitrary value instead, e.g.
 
 - `pnpm dev` — dev server (localhost:3000)
 - `pnpm build` — production build
-- `pnpm test` — Vitest unit/component tests (`globals: true`, jsdom)
+- `pnpm test` — Vitest unit/component tests (`globals: true`, jsdom; also covers `scripts/**/*.test.mjs`)
 - `pnpm test:e2e` — Playwright e2e
-- `pnpm gen:tts` — pre-generate line-by-line TTS audio (see below)
+- `pnpm gen` — full PDF→page+audio sync (`gen:lessons` then `gen:tts`)
+- `pnpm gen:lessons` — re-extract lessons from the PDF (needs `.pdfvenv`, see `scripts/README.md`)
+- `pnpm gen:tts` — sync line-by-line TTS audio (see below)
 
 ## TTS narration
 
@@ -37,11 +56,17 @@ via Xiaomi MiMo (`mimo-v2.5-tts`, voice `茉莉`). The `LessonPlayer` component
 plays them (play/pause whole lesson with auto-advance + highlight, tap-a-line,
 replay, 慢/正常 speed via `playbackRate`).
 
-- Run `pnpm gen:tts` after editing `lessons.json`; it only synthesizes missing
-  clips (`--force` to redo all) and rewrites `src/data/audio-manifest.json`.
-- Requires `MIMO_API_KEY` in `.env.local` (gitignored) and `ffmpeg` on PATH.
+- Run `pnpm gen:tts` after `lessons.json` changes; it re-synthesizes a clip
+  only when its MP3 is missing **or its text no longer matches what
+  `src/data/audio-manifest.json` recorded** (`--force` to redo all). The
+  skip/synth decision is `planClips` in `scripts/tts-plan.mjs` (unit-tested);
+  the clip text comes from the same `lineText` in `src/data/line-text.ts`
+  that the app uses — do not duplicate it.
+- Requires `MIMO_API_KEY` in `.env.local` (gitignored) and `ffmpeg` on PATH —
+  only when at least one clip actually needs synthesizing.
 - Fix a mispronounced 多音字 by adding the line's key to
-  `src/data/tts-overrides.json` (`"<id>-<i>": "reworded text"`) and re-running.
+  `src/data/tts-overrides.json` (`"<id>-<i>": "reworded text"`) and re-running;
+  the changed text regenerates just that clip.
 
 ## Conventions
 
