@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Storyloft — reading that grows with every kid",
+  title: "拼音阅读 · 一年级语文",
   description:
-    "A leveled reading library for early readers. Monochrome-editorial design system with oversized pastel story blocks.",
+    "跟着拼音，每天读一课 —— 一年级语文课文阅读。",
 };
 
 export default function RootLayout({
@@ -25,10 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="cjk min-h-full flex flex-col">{children}</body>
     </html>
   );
 }
