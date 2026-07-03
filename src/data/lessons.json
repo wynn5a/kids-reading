@@ -1865,9 +1865,7 @@
         {
           "char": "，",
           "pinyin": ""
-        }
-      ],
-      [
+        },
         {
           "char": "呱",
           "pinyin": "guā"
@@ -1909,9 +1907,7 @@
         {
           "char": "，",
           "pinyin": ""
-        }
-      ],
-      [
+        },
         {
           "char": "呱",
           "pinyin": "guā"
@@ -2001,9 +1997,8 @@
         {
           "char": "落",
           "pinyin": "luò"
-        }
-      ],
-      [
+        },
+
         {
           "char": "下",
           "pinyin": "xià"
@@ -2173,9 +2168,8 @@
         {
           "char": "草",
           "pinyin": "cǎo"
-        }
-      ],
-      [
+        },
+
         {
           "char": "的",
           "pinyin": "de"
@@ -2269,9 +2263,8 @@
         {
           "char": "有",
           "pinyin": "yǒu"
-        }
-      ],
-      [
+        },
+
         {
           "char": "草",
           "pinyin": "cǎo"
@@ -2353,9 +2346,8 @@
         {
           "char": "红",
           "pinyin": "hóng"
-        }
-      ],
-      [
+        },
+
         {
           "char": "了",
           "pinyin": "le"
@@ -2383,7 +2375,9 @@
         {
           "char": "。",
           "pinyin": ""
-        },
+        }
+      ],
+      [
         {
           "char": "没",
           "pinyin": "méi"
@@ -2415,9 +2409,8 @@
         {
           "char": "地",
           "pinyin": "dì"
-        }
-      ],
-      [
+        },
+
         {
           "char": "方",
           "pinyin": "fang"
@@ -3166,13 +3159,14 @@
         {
           "char": "。",
           "pinyin": ""
-        },
+        }],
+        [
         {
           "char": "沙",
           "pinyin": "shā"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "滩",
           "pinyin": "tān"
@@ -3216,7 +3210,7 @@
         {
           "char": "。",
           "pinyin": ""
-        },
+        }],[
         {
           "char": "雪",
           "pinyin": "xuě"
@@ -3237,8 +3231,8 @@
           "char": "的",
           "pinyin": "de"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "浪",
           "pinyin": "làng"
@@ -3294,7 +3288,8 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }],
+        [
         {
           "char": "悄",
           "pinyin": "qiāo"
@@ -3303,8 +3298,8 @@
           "char": "悄",
           "pinyin": "qiāo"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "撒",
           "pinyin": "sǎ"
@@ -3402,13 +3397,14 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }],
+        [
         {
           "char": "捡",
           "pinyin": "jiǎn"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "起",
           "pinyin": "qǐ"
@@ -3473,8 +3469,8 @@
           "char": "项",
           "pinyin": "xiàng"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "链",
           "pinyin": "liàn"
@@ -3502,7 +3498,7 @@
         {
           "char": "。",
           "pinyin": ""
-        },
+        }],[
         {
           "char": "快",
           "pinyin": "kuài"
@@ -3539,8 +3535,8 @@
           "char": "滩",
           "pinyin": "tān"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "上",
           "pinyin": "shàng"
@@ -3580,7 +3576,7 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }],[
         {
           "char": "挂",
           "pinyin": "guà"
@@ -3601,8 +3597,8 @@
           "char": "胸",
           "pinyin": "xiōng"
         }
-      ],
-      [
+      ,
+      
         {
           "char": "前",
           "pinyin": "qián"
