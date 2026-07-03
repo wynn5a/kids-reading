@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useReducer, useRef, useState } from "react";
-import { Pause, Play, RotateCcw, Gauge } from "lucide-react";
+import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
+import { Pause, Play, RotateCcw, Rabbit } from "lucide-react";
+import { IconButton } from "@/components/ui";
 import type { Token } from "@/data/types";
 import { clipSrc } from "@/data/line-text";
 import {
@@ -13,7 +14,16 @@ import { RubyText } from "./RubyText";
 const SLOW = 0.75;
 const NORMAL = 1;
 
-export function LessonPlayer({ id, lines }: { id: number; lines: Token[][] }) {
+export function LessonPlayer({
+  id,
+  lines,
+  actions,
+}: {
+  id: number;
+  lines: Token[][];
+  /** Lesson actions (mark-read / home) rendered on the right of the footer. */
+  actions?: ReactNode;
+}) {
   const [state, dispatch] = useReducer(playerReducer, initialPlayerState);
   const [speed, setSpeed] = useState<number>(NORMAL);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -64,36 +74,41 @@ export function LessonPlayer({ id, lines }: { id: number; lines: Token[][] }) {
         />
       </article>
 
-      {/* Fixed-height control bar so RubyText's auto-fit measures a stable box. */}
-      <div className="mt-4 flex h-14 shrink-0 items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={togglePlay}
-          aria-label={playing ? "暂停" : "播放"}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-white shadow-md transition-transform active:scale-95 hover:bg-amber-600"
-        >
-          {playing ? <Pause className="h-6 w-6" fill="currentColor" /> : <Play className="h-6 w-6 translate-x-[1px]" fill="currentColor" />}
-        </button>
+      {/* One unified footer: playback cluster on the left, lesson actions on
+          the right. min-height keeps the box stable so RubyText's auto-fit (and
+          MarkReadControls mounting after progress loads) don't reflow it. */}
+      <div className="mt-4 flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={playing ? "暂停" : "播放"}
+            className="flex size-12 items-center justify-center rounded-full bg-primary text-on-primary transition-transform duration-150 active:scale-95 hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          >
+            {playing ? (
+              <Pause className="size-5" fill="currentColor" strokeWidth={0} />
+            ) : (
+              <Play className="size-5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
+            )}
+          </button>
 
-        <button
-          type="button"
-          onClick={() => dispatch({ type: "replay" })}
-          aria-label="重听这一句"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-700 transition-colors active:scale-95 hover:bg-amber-200"
-        >
-          <RotateCcw className="h-5 w-5" />
-        </button>
+          <IconButton aria-label="重听这一句" onClick={() => dispatch({ type: "replay" })}>
+            <RotateCcw className="size-5" strokeWidth={1.75} />
+          </IconButton>
 
-        <button
-          type="button"
-          onClick={() => setSpeed((s) => (s === NORMAL ? SLOW : NORMAL))}
-          aria-label="切换语速"
-          aria-pressed={speed === SLOW}
-          className="flex h-11 items-center gap-1.5 rounded-full bg-amber-100 px-4 text-amber-700 transition-colors active:scale-95 hover:bg-amber-200"
-        >
-          <Gauge className="h-5 w-5" />
-          <span className="cjk text-sm font-semibold">{speed === SLOW ? "慢速" : "正常"}</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setSpeed((s) => (s === NORMAL ? SLOW : NORMAL))}
+            aria-label="切换语速"
+            aria-pressed={speed === SLOW}
+            className="inline-flex h-10 items-center gap-1.5 rounded-pill bg-surface-soft px-4 text-ink transition-colors hover:bg-hairline active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          >
+            <Rabbit className="size-5" strokeWidth={1.75} />
+            <span className="cjk text-sm font-semibold">{speed === SLOW ? "慢速" : "正常"}</span>
+          </button>
+        </div>
+
+        {actions && <div className="flex items-center">{actions}</div>}
       </div>
 
       <audio

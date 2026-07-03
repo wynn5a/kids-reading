@@ -23,15 +23,14 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
         {lesson.author && <p className="cjk mt-1 text-neutral-600">{lesson.author}</p>}
       </header>
 
-      {/* LessonPlayer renders the article (flex-1) and the play-control bar
-          (fixed height), so RubyText's auto-fit measures a stable box. */}
-      <LessonPlayer id={lessonId} lines={lesson.lines} />
-
-      {/* min-height reserves the controls' space so the article box height is
-          stable from first paint — the auto-fit measures against it. */}
-      <div className="mt-4 flex min-h-12 shrink-0 items-start">
-        <MarkReadControls id={lessonId} nextId={nextId} />
-      </div>
+      {/* LessonPlayer renders the article (flex-1) and a single footer row —
+          playback controls plus the lesson actions passed here — so the whole
+          page has one control layer and RubyText's auto-fit sees a stable box. */}
+      <LessonPlayer
+        id={lessonId}
+        lines={lesson.lines}
+        actions={<MarkReadControls id={lessonId} nextId={nextId} />}
+      />
     </main>
   );
 }
