@@ -7,7 +7,7 @@ import { Card, Button } from "@/components/ui";
  * Counts from `from` up to `target` over `duration` ms with an ease-out curve.
  * Jumps straight to the target when the user prefers reduced motion.
  */
-function useCountUp(target: number, from = 0, duration = 900): number {
+function useCountUp(target: number, from = 0, duration = 1800): number {
   const [value, setValue] = useState(from);
 
   useEffect(() => {
