@@ -32,6 +32,9 @@ export function LessonSummary({
 
   useEffect(() => {
     primaryRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onHome();
     };

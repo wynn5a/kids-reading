@@ -40,6 +40,13 @@ describe("LessonSummary", () => {
     expect(onHome).toHaveBeenCalledOnce();
   });
 
+  it("calls onHome on Escape", () => {
+    const onHome = vi.fn();
+    render(<LessonSummary {...base} onHome={onHome} />);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onHome).toHaveBeenCalledOnce();
+  });
+
   it("renders the finale state on the last lesson", () => {
     const onHome = vi.fn();
     render(<LessonSummary {...base} isLast pct={100} message="全部读完啦！你太了不起了！" onHome={onHome} />);
