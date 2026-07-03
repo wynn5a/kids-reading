@@ -170,7 +170,9 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }
+      ],
+      [
         {
           "char": "一",
           "pinyin": "yí"
@@ -214,7 +216,9 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }
+      ],
+      [
         {
           "char": "一",
           "pinyin": "yí"
@@ -1863,7 +1867,9 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }
+      ],
+      [
         {
           "char": "呱",
           "pinyin": "guā"
@@ -1905,7 +1911,9 @@
         {
           "char": "，",
           "pinyin": ""
-        },
+        }
+      ],
+      [
         {
           "char": "呱",
           "pinyin": "guā"
@@ -2135,13 +2143,13 @@
         {
           "char": "：",
           "pinyin": ""
-        },
-        {
-          "char": "“",
-          "pinyin": ""
         }
       ],
       [
+        {
+          "char": "“",
+          "pinyin": ""
+        },
         {
           "char": "我",
           "pinyin": "wǒ"
@@ -2227,13 +2235,13 @@
         {
           "char": "：",
           "pinyin": ""
-        },
-        {
-          "char": "“",
-          "pinyin": ""
         }
       ],
       [
+        {
+          "char": "“",
+          "pinyin": ""
+        },
         {
           "char": "我",
           "pinyin": "wǒ"
@@ -3580,9 +3588,7 @@
         {
           "char": "，",
           "pinyin": ""
-        }
-      ],
-      [
+        },
         {
           "char": "挂",
           "pinyin": "guà"
@@ -4386,13 +4392,13 @@
         {
           "char": "：",
           "pinyin": ""
-        },
-        {
-          "char": "“",
-          "pinyin": ""
         }
       ],
       [
+        {
+          "char": "“",
+          "pinyin": ""
+        },
         {
           "char": "孩",
           "pinyin": "hái"

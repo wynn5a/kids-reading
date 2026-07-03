@@ -37,6 +37,46 @@ def test_split_long_line_at_punctuation():
     ]
 
 
+def test_split_never_leaves_dangling_opening_quote():
+    # 秋天 1-3: naive splitting broke right after 个“ — the opening quote must
+    # stay attached to the quoted text.
+    line = [tok(c) for c in "一群大雁往南飞，一会儿排成个“人”字，一会儿排成个“一”字。"]
+    result = [line_text(row) for row in reflow_lines([line])]
+    assert result == [
+        "一群大雁往南飞，",
+        "一会儿排成个“人”字，",
+        "一会儿排成个“一”字。",
+    ]
+    assert not any(row.endswith("“") for row in result)
+
+
+def test_full_width_comma_row_merges_and_resplits_at_sentence_end():
+    # 项链 11-0: the page width broke the paragraph after 沙滩，. The row is
+    # full-width so it merges with the next, then re-splits at the 。 instead
+    # of stranding 沙滩， at the end of a line.
+    lines = [
+        [tok(c) for c in "大海，蓝蓝的，又宽又远。沙滩，"],
+        [tok(c) for c in "黄黄的，又长又软。"],
+    ]
+    assert [line_text(row) for row in reflow_lines(lines)] == [
+        "大海，蓝蓝的，又宽又远。",
+        "沙滩，黄黄的，又长又软。",
+    ]
+
+
+def test_short_comma_rows_are_poem_lines_and_stay():
+    # 雨点儿 8-0: a short row ending 、/，is the book's own poem-style line
+    # break, not a forced page-width wrap — keep it.
+    lines = [
+        [tok(c) for c in "数不清的雨点儿，"],
+        [tok(c) for c in "从云彩里飘落下来。"],
+    ]
+    assert [line_text(row) for row in reflow_lines(lines)] == [
+        "数不清的雨点儿，",
+        "从云彩里飘落下来。",
+    ]
+
+
 def test_reflow_lesson_13_shape():
     # Simulates PDF rows for 乌鸦喝水 before reflow.
     lines = [
