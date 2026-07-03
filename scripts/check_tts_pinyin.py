@@ -1,13 +1,19 @@
-"""Report lines where the TTS may not follow the textbook pinyin.
+"""Derive 多音字 pronunciation hints for TTS from the textbook pinyin.
 
 The TTS engine only sees plain hanzi and guesses 多音字 readings itself. This
 compares the textbook's pinyin (lessons.json) against pypinyin's context
-guess — a proxy for a TTS frontend — and flags every mismatch so it can be
-listened to and, if wrong, fixed with a homophone in tts-overrides.json.
+guess — a proxy for a TTS frontend — and flags every mismatch.
 
-    .pdfvenv/bin/python scripts/check_tts_pinyin.py
+    .pdfvenv/bin/python scripts/check_tts_pinyin.py           # report only
+    .pdfvenv/bin/python scripts/check_tts_pinyin.py --write   # + write hints
 
-一/不 tone sandhi and neutral-tone interjections are listed separately:
+``--write`` regenerates ``src/data/tts-pinyin-hints.json``: one natural-
+language 发音指导 sentence per risky clip, which gen-tts.mjs appends to the
+MiMo user message (per the usage guide, the user message carries direction).
+Keys with a tts-overrides.json entry are skipped — the override already
+rewords the spoken text.
+
+一/不 tone sandhi and neutral-tone interjections are excluded from hints:
 neural TTS engines almost always handle those natively.
 """
 from __future__ import annotations
@@ -65,18 +71,40 @@ def mismatches() -> tuple[list[tuple], list[tuple]]:
     return risky, benign
 
 
+def build_hints(risky: list[tuple]) -> dict[str, str]:
+    """One 发音指导 sentence per clip key, e.g. 多音字发音：「长」读“cháng”。"""
+    per_key: dict[str, dict[str, str]] = {}
+    for key, ch, book, _guess, _text, overridden in risky:
+        if overridden:
+            continue  # the override already rewords the spoken text
+        per_key.setdefault(key, {})[ch] = book
+    return {
+        key: "多音字发音：" + "，".join(f"「{ch}」读“{p}”" for ch, p in chars.items()) + "。"
+        for key, chars in per_key.items()
+    }
+
+
 def main() -> None:
+    import sys
+
     risky, benign = mismatches()
-    unhandled = [e for e in risky if not e[5]]
 
-    print(f"{len(risky)} risky mismatch(es), {len(unhandled)} without a tts-override:\n")
+    print(f"{len(risky)} risky mismatch(es):\n")
     for key, ch, book, guess, text, overridden in risky:
-        mark = "✓ override" if overridden else "✗ LISTEN"
-        print(f"  {mark}  {key}  {ch}: 课本={book:8} 引擎可能读={guess:8} | {text}")
+        mark = "override" if overridden else "hint    "
+        print(f"  {mark}  {key}  {ch}: 课本={book:8} 引擎默认={guess:8} | {text}")
 
-    print(f"\n{len(benign)} sandhi/interjection difference(s) (TTS usually handles these):")
+    print(f"\n{len(benign)} sandhi/interjection difference(s) (TTS handles these natively):")
     for key, ch, book, guess, text, overridden in benign:
         print(f"  ·  {key}  {ch}: 课本={book:8} 猜测={guess:8} | {text}")
+
+    if "--write" in sys.argv:
+        hints = build_hints(risky)
+        out = ROOT / "src" / "data" / "tts-pinyin-hints.json"
+        out.write_text(
+            json.dumps(hints, ensure_ascii=False, indent=2, sort_keys=True) + "\n", "utf-8"
+        )
+        print(f"\nWrote {len(hints)} hint(s) to {out}")
 
 
 if __name__ == "__main__":

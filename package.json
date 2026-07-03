@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "gen:lessons": ".pdfvenv/bin/python scripts/extract_lessons.py",
+    "gen:lessons": ".pdfvenv/bin/python scripts/extract_lessons.py && .pdfvenv/bin/python scripts/check_tts_pinyin.py --write",
     "gen": "pnpm gen:lessons && pnpm gen:tts",
     "lint": "eslint",
     "gen:tts": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-tts.mjs",

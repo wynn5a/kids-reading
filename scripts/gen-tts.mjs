@@ -58,11 +58,14 @@ function extractBase64(json) {
   return data;
 }
 
-async function synthesize(text) {
+async function synthesize(text, hint) {
   const body = {
     model: MODEL,
     messages: [
-      { role: "user", content: STYLE },
+      // Per the MiMo usage guide, the user message carries natural-language
+      // direction; 多音字 readings (from the textbook pinyin) are appended so
+      // the engine follows the book instead of guessing.
+      { role: "user", content: hint ? `${STYLE}。${hint}` : STYLE },
       { role: "assistant", content: text },
     ],
     audio: { format: "wav", voice: VOICE },
@@ -111,6 +114,8 @@ function wavToMp3(wavBuffer, outPath) {
 // --- main --------------------------------------------------------------------
 const lessons = JSON.parse(readFileSync(join(ROOT, "src", "data", "lessons.json"), "utf8"));
 const overrides = JSON.parse(readFileSync(join(ROOT, "src", "data", "tts-overrides.json"), "utf8"));
+const hintsPath = join(ROOT, "src", "data", "tts-pinyin-hints.json");
+const hints = existsSync(hintsPath) ? JSON.parse(readFileSync(hintsPath, "utf8")) : {};
 mkdirSync(AUDIO_DIR, { recursive: true });
 
 // Plan the full clip list (so the manifest is complete even when clips exist);
@@ -119,6 +124,7 @@ const prevManifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, "u
 const clips = planClips({
   lessons,
   overrides,
+  hints,
   prevManifest,
   hasClip: (key) => existsSync(join(AUDIO_DIR, `${key}.mp3`)),
   force: FORCE,
@@ -133,16 +139,16 @@ const manifest = {};
 let made = 0;
 let skipped = 0;
 for (let n = 0; n < clips.length; n++) {
-  const { key, text, action } = clips[n];
-  manifest[key] = { text };
+  const { key, text, hint, action } = clips[n];
+  manifest[key] = hint ? { text, hint } : { text };
   const tag = `[${n + 1}/${clips.length}] ${key}`;
   if (action === "skip") {
     skipped++;
     console.log(`${tag} skip (up to date)  ${text}`);
     continue;
   }
-  process.stdout.write(`${tag} …  ${text}\n`);
-  const wav = await synthesize(text);
+  process.stdout.write(`${tag} …  ${text}${hint ? `  (${hint})` : ""}\n`);
+  const wav = await synthesize(text, hint);
   await wavToMp3(wav, join(AUDIO_DIR, `${key}.mp3`));
   made++;
 }

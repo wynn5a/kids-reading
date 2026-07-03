@@ -64,9 +64,16 @@ replay, 慢/正常 speed via `playbackRate`).
   that the app uses — do not duplicate it.
 - Requires `MIMO_API_KEY` in `.env.local` (gitignored) and `ffmpeg` on PATH —
   only when at least one clip actually needs synthesizing.
-- Fix a mispronounced 多音字 by adding the line's key to
-  `src/data/tts-overrides.json` (`"<id>-<i>": "reworded text"`) and re-running;
-  the changed text regenerates just that clip.
+- 多音字 readings follow the textbook automatically: `pnpm gen:lessons` also
+  regenerates `src/data/tts-pinyin-hints.json` (via
+  `scripts/check_tts_pinyin.py --write`, comparing textbook pinyin against a
+  pypinyin guess), and `gen-tts` appends each line's 发音指导 to the MiMo
+  user message (MiMo has no pinyin markup — natural-language direction is the
+  documented control). A changed hint regenerates that clip, same as changed
+  text.
+- Last resort for a still-mispronounced line: add its key to
+  `src/data/tts-overrides.json` (`"<id>-<i>": "reworded/homophone text"`) —
+  spoken only, the page keeps the real text.
 
 ## Conventions
 

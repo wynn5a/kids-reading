@@ -62,6 +62,51 @@ test("adding or changing a tts override re-synthesizes that clip", () => {
   expect(plan.find((c) => c.key === "1-1").action).toBe("skip");
 });
 
+test("adding a pronunciation hint re-synthesizes that clip", () => {
+  const prevManifest = {
+    "1-0": { text: "天气凉了，" },
+    "1-1": { text: "秋天来了！" },
+    "2-0": { text: "弯弯的月儿。" },
+  };
+  const plan = planClips({
+    lessons,
+    overrides: {},
+    hints: { "1-0": "多音字发音：「凉」读“liáng”。" },
+    prevManifest,
+    hasClip: allExist,
+  });
+  const hinted = plan.find((c) => c.key === "1-0");
+  expect(hinted).toMatchObject({ action: "synth", hint: "多音字发音：「凉」读“liáng”。" });
+  expect(plan.find((c) => c.key === "1-1").action).toBe("skip");
+});
+
+test("clip with unchanged hint recorded in the manifest is skipped", () => {
+  const hint = "多音字发音：「凉」读“liáng”。";
+  const prevManifest = {
+    "1-0": { text: "天气凉了，", hint },
+    "1-1": { text: "秋天来了！" },
+    "2-0": { text: "弯弯的月儿。" },
+  };
+  const plan = planClips({
+    lessons,
+    overrides: {},
+    hints: { "1-0": hint },
+    prevManifest,
+    hasClip: allExist,
+  });
+  expect(plan.every((c) => c.action === "skip")).toBe(true);
+});
+
+test("removing a previously recorded hint re-synthesizes", () => {
+  const prevManifest = {
+    "1-0": { text: "天气凉了，", hint: "多音字发音：「凉」读“liáng”。" },
+    "1-1": { text: "秋天来了！" },
+    "2-0": { text: "弯弯的月儿。" },
+  };
+  const plan = planClips({ lessons, overrides: {}, prevManifest, hasClip: allExist });
+  expect(plan.find((c) => c.key === "1-0").action).toBe("synth");
+});
+
 test("force re-synthesizes everything", () => {
   const prevManifest = {
     "1-0": { text: "天气凉了，" },
