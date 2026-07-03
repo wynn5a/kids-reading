@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getAllLessons, getLesson } from "@/data/lessons";
-import { RubyText } from "@/components/reading/RubyText";
+import { LessonPlayer } from "@/components/reading/LessonPlayer";
 import { MarkReadControls } from "@/components/reading/MarkReadControls";
 
 export function generateStaticParams() {
@@ -23,13 +23,13 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
         {lesson.author && <p className="cjk mt-1 text-neutral-600">{lesson.author}</p>}
       </header>
 
-      <article className="mt-6 min-h-0 flex-1">
-        <RubyText lines={lesson.lines} />
-      </article>
+      {/* LessonPlayer renders the article (flex-1) and the play-control bar
+          (fixed height), so RubyText's auto-fit measures a stable box. */}
+      <LessonPlayer id={lessonId} lines={lesson.lines} />
 
       {/* min-height reserves the controls' space so the article box height is
           stable from first paint — the auto-fit measures against it. */}
-      <div className="mt-6 flex min-h-12 shrink-0 items-start">
+      <div className="mt-4 flex min-h-12 shrink-0 items-start">
         <MarkReadControls id={lessonId} nextId={nextId} />
       </div>
     </main>

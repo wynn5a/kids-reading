@@ -11,7 +11,17 @@ const MAX = 30;
 // allow wrapping rather than shrink the text into unreadability.
 const NOWRAP_FLOOR = 14;
 
-export function RubyText({ lines }: { lines: Token[][] }) {
+export function RubyText({
+  lines,
+  activeLine = null,
+  onLineClick,
+}: {
+  lines: Token[][];
+  /** Index of the line to highlight during playback, or null for none. */
+  activeLine?: number | null;
+  /** Called with a line index when a line is tapped (enables tap-to-play). */
+  onLineClick?: (index: number) => void;
+}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(MAX);
@@ -126,7 +136,12 @@ export function RubyText({ lines }: { lines: Token[][] }) {
         {lines.map((line, i) => (
           <p
             key={i}
-            className={`flex ${wrap ? "flex-wrap" : "flex-nowrap"} items-end justify-center gap-x-[0.06em] gap-y-[0.2em] leading-[1.5] not-first:mt-[0.15em]`}
+            data-line={i}
+            aria-current={activeLine === i ? "true" : undefined}
+            onClick={onLineClick ? () => onLineClick(i) : undefined}
+            className={`flex ${wrap ? "flex-wrap" : "flex-nowrap"} items-end justify-center gap-x-[0.06em] gap-y-[0.2em] leading-[1.5] not-first:mt-[0.15em] rounded-lg px-[0.15em] transition-colors ${
+              onLineClick ? "cursor-pointer" : ""
+            } ${activeLine === i ? "bg-amber-200/70" : onLineClick ? "hover:bg-amber-100/50" : ""}`}
           >
             {line.map((t, j) =>
               t.pinyin ? (

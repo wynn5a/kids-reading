@@ -27,6 +27,21 @@ expecting a container width. Use an explicit arbitrary value instead, e.g.
 - `pnpm build` — production build
 - `pnpm test` — Vitest unit/component tests (`globals: true`, jsdom)
 - `pnpm test:e2e` — Playwright e2e
+- `pnpm gen:tts` — pre-generate line-by-line TTS audio (see below)
+
+## TTS narration
+
+Each visual line of every lesson has a pre-generated MP3 at
+`public/audio/<lessonId>-<lineIndex>.mp3`, synthesized by `scripts/gen-tts.mjs`
+via Xiaomi MiMo (`mimo-v2.5-tts`, voice `茉莉`). The `LessonPlayer` component
+plays them (play/pause whole lesson with auto-advance + highlight, tap-a-line,
+replay, 慢/正常 speed via `playbackRate`).
+
+- Run `pnpm gen:tts` after editing `lessons.json`; it only synthesizes missing
+  clips (`--force` to redo all) and rewrites `src/data/audio-manifest.json`.
+- Requires `MIMO_API_KEY` in `.env.local` (gitignored) and `ffmpeg` on PATH.
+- Fix a mispronounced 多音字 by adding the line's key to
+  `src/data/tts-overrides.json` (`"<id>-<i>": "reworded text"`) and re-running.
 
 ## Conventions
 
