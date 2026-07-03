@@ -81,17 +81,19 @@ export function LessonSummary({
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-6">
-          <div className="cjk">
-            <p className="text-sm text-neutral-500">认识了</p>
-            <p className="mt-1 flex items-baseline justify-center gap-2">
-              <span className="text-4xl font-bold">{totalChars}</span>
-              <span className="text-lg">个字</span>
-              {newChars > 0 && (
-                <span className="rounded-pill bg-block-lime px-2 py-0.5 text-sm font-semibold">
-                  +{newChars}
-                </span>
-              )}
+        <div className="cjk mt-8 grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-block-lime px-4 py-3">
+            <p className="text-sm text-neutral-600">这一课学会</p>
+            <p className="mt-1 flex items-baseline justify-center gap-1">
+              <span className="text-3xl font-bold">{newChars}</span>
+              <span className="text-base">个字</span>
+            </p>
+          </div>
+          <div className="rounded-lg bg-surface-soft px-4 py-3">
+            <p className="text-sm text-neutral-600">一共认识</p>
+            <p className="mt-1 flex items-baseline justify-center gap-1">
+              <span className="text-3xl font-bold">{totalChars}</span>
+              <span className="text-base">个字</span>
             </p>
           </div>
         </div>

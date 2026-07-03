@@ -20,14 +20,15 @@ describe("LessonSummary", () => {
     render(<LessonSummary {...base} />);
     expect(screen.getByText("太棒了！继续加油！")).toBeInTheDocument();
     expect(screen.getByText("读完 3 / 10")).toBeInTheDocument();
-    expect(screen.getByText("42")).toBeInTheDocument();
-    expect(screen.getByText("+7")).toBeInTheDocument();
     expect(screen.getByText("连续阅读 5 天")).toBeInTheDocument();
   });
 
-  it("hides the +N bump when no new characters", () => {
-    render(<LessonSummary {...base} newChars={0} />);
-    expect(screen.queryByText("+0")).not.toBeInTheDocument();
+  it("shows new-this-lesson and cumulative character counts as two parts", () => {
+    render(<LessonSummary {...base} />);
+    const newBlock = screen.getByText("这一课学会").closest("div")!;
+    const totalBlock = screen.getByText("一共认识").closest("div")!;
+    expect(newBlock).toHaveTextContent("7");
+    expect(totalBlock).toHaveTextContent("42");
   });
 
   it("fires callbacks from the action buttons", () => {
