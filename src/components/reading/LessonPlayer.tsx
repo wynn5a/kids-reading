@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
-import { Pause, Play, RotateCcw, Rabbit } from "lucide-react";
+import { Pause, Play, RotateCcw, Rabbit, Turtle } from "lucide-react";
 import { IconButton } from "@/components/ui";
 import type { Token } from "@/data/types";
 import { clipSrc } from "@/data/line-text";
@@ -103,7 +103,11 @@ export function LessonPlayer({
             aria-pressed={speed === SLOW}
             className="inline-flex h-10 items-center gap-1.5 rounded-pill bg-surface-soft px-4 text-ink transition-colors hover:bg-hairline active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
           >
-            <Rabbit className="size-5" strokeWidth={1.75} />
+            {speed === SLOW ? (
+              <Turtle className="size-5" strokeWidth={1.75} />
+            ) : (
+              <Rabbit className="size-5" strokeWidth={1.75} />
+            )}
             <span className="cjk text-sm font-semibold">{speed === SLOW ? "慢速" : "正常"}</span>
           </button>
         </div>
