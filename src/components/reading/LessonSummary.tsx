@@ -1,7 +1,37 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PartyPopper, Trophy, Star, Flame } from "lucide-react";
 import { Card, Button } from "@/components/ui";
+
+/**
+ * Counts from `from` up to `target` over `duration` ms with an ease-out curve.
+ * Jumps straight to the target when the user prefers reduced motion.
+ */
+function useCountUp(target: number, from = 0, duration = 900): number {
+  const [value, setValue] = useState(from);
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || from === target) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    let start = 0;
+    const tick = (t: number) => {
+      if (!start) start = t;
+      const p = Math.min((t - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+      setValue(Math.round(from + (target - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setValue(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, from, duration]);
+
+  return value;
+}
 
 export type LessonSummaryProps = {
   done: number;
@@ -29,6 +59,8 @@ export function LessonSummary({
   onHome,
 }: LessonSummaryProps) {
   const primaryRef = useRef<HTMLButtonElement>(null);
+  const lessonCount = useCountUp(lessonChars, 0);
+  const totalCount = useCountUp(totalChars, Math.max(0, totalChars - lessonChars));
 
   useEffect(() => {
     primaryRef.current?.focus();
@@ -85,14 +117,14 @@ export function LessonSummary({
           <div className="rounded-lg bg-block-lime px-4 py-3">
             <p className="text-sm text-neutral-600">这一课学会</p>
             <p className="mt-1 flex items-baseline justify-center gap-1">
-              <span className="text-3xl font-bold">{lessonChars}</span>
+              <span className="text-3xl font-bold">{lessonCount}</span>
               <span className="text-base">个字</span>
             </p>
           </div>
           <div className="rounded-lg bg-surface-soft px-4 py-3">
             <p className="text-sm text-neutral-600">一共认识</p>
             <p className="mt-1 flex items-baseline justify-center gap-1">
-              <span className="text-3xl font-bold">{totalChars}</span>
+              <span className="text-3xl font-bold">{totalCount}</span>
               <span className="text-base">个字</span>
             </p>
           </div>
