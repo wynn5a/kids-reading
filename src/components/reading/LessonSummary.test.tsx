@@ -7,7 +7,7 @@ const base = {
   total: 10,
   pct: 30,
   totalChars: 42,
-  newChars: 7,
+  lessonChars: 7,
   streak: 5,
   isLast: false,
   message: "太棒了！继续加油！",
@@ -23,11 +23,11 @@ describe("LessonSummary", () => {
     expect(screen.getByText("连续阅读 5 天")).toBeInTheDocument();
   });
 
-  it("shows new-this-lesson and cumulative character counts as two parts", () => {
+  it("shows this-lesson and cumulative character counts as two parts", () => {
     render(<LessonSummary {...base} />);
-    const newBlock = screen.getByText("这一课学会").closest("div")!;
+    const lessonBlock = screen.getByText("这一课学会").closest("div")!;
     const totalBlock = screen.getByText("一共认识").closest("div")!;
-    expect(newBlock).toHaveTextContent("7");
+    expect(lessonBlock).toHaveTextContent("7");
     expect(totalBlock).toHaveTextContent("42");
   });
 

@@ -8,7 +8,7 @@ export type LessonSummaryProps = {
   total: number;
   pct: number;
   totalChars: number;
-  newChars: number;
+  lessonChars: number;
   streak: number;
   isLast: boolean;
   message: string;
@@ -21,7 +21,7 @@ export function LessonSummary({
   total,
   pct,
   totalChars,
-  newChars,
+  lessonChars,
   streak,
   isLast,
   message,
@@ -85,7 +85,7 @@ export function LessonSummary({
           <div className="rounded-lg bg-block-lime px-4 py-3">
             <p className="text-sm text-neutral-600">这一课学会</p>
             <p className="mt-1 flex items-baseline justify-center gap-1">
-              <span className="text-3xl font-bold">{newChars}</span>
+              <span className="text-3xl font-bold">{lessonChars}</span>
               <span className="text-base">个字</span>
             </p>
           </div>

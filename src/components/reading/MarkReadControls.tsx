@@ -46,16 +46,14 @@ export function MarkReadControls({ id, nextId }: { id: number; nextId: number | 
 
     const { done, total, pct } = completion(all, post.readLessonIds);
     const totalChars = learnedCharCount(all, post.readLessonIds);
-    const newChars = alreadyRead
-      ? 0
-      : totalChars - learnedCharCount(all, post.readLessonIds.filter((x) => x !== id));
+    const lessonChars = learnedCharCount(all, [id]);
 
     setStats({
       done,
       total,
       pct,
       totalChars,
-      newChars,
+      lessonChars,
       streak: currentStreak(post.activity, today),
       isLast,
       message: celebrationMessage(pct, isLast),
