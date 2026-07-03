@@ -13,6 +13,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import fitz  # PyMuPDF
+
+from reflow_lesson_lines import reflow_lines
 from pypinyin import pinyin, Style
 
 # Run-location-independent paths (repo root is the parent of scripts/).
@@ -314,7 +316,7 @@ def main():
         lesson = {"id": i, "number": meta["number"], "title": meta["title"]}
         if meta.get("author"):
             lesson["author"] = meta["author"]
-        lesson["lines"] = lines
+        lesson["lines"] = reflow_lines(lines)
         out.append(lesson)
 
     if gaps:

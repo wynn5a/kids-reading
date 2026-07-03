@@ -65,14 +65,22 @@ export function RubyText({ lines }: { lines: Token[][] }) {
       let useWrap: boolean;
       let best: number;
       if (nowrap >= NOWRAP_FLOOR) {
+        // Lines fit unbroken at a readable size — always prefer that.
         useWrap = false;
         best = nowrap;
       } else {
-        // Keeping lines unbroken would shrink below the floor — let them wrap
-        // and fit by height alone.
+        // Unbroken would be below the floor. Wrapping is only worth it if it
+        // actually yields a bigger font (for short lines it doesn't — wrapping
+        // just adds rows — so keep them unbroken in that case).
         setWrapMode(true);
-        useWrap = true;
-        best = search(heightFits);
+        const wrapped = search(heightFits);
+        if (wrapped > nowrap) {
+          useWrap = true;
+          best = wrapped;
+        } else {
+          useWrap = false;
+          best = nowrap;
+        }
       }
 
       // Verify at the final integer size and shrink until it genuinely fits
@@ -118,7 +126,7 @@ export function RubyText({ lines }: { lines: Token[][] }) {
         {lines.map((line, i) => (
           <p
             key={i}
-            className={`flex ${wrap ? "flex-wrap" : "flex-nowrap"} items-end justify-center gap-x-[0.06em] gap-y-[0.25em] leading-[1.9] not-first:mt-[0.3em]`}
+            className={`flex ${wrap ? "flex-wrap" : "flex-nowrap"} items-end justify-center gap-x-[0.06em] gap-y-[0.2em] leading-[1.5] not-first:mt-[0.15em]`}
           >
             {line.map((t, j) =>
               t.pinyin ? (
