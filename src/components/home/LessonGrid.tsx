@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, Lock } from "lucide-react";
 import type { Lesson } from "@/data/types";
 import { isUnlocked } from "@/lib/progress";
 
@@ -15,8 +16,13 @@ export function LessonGrid({ lessons, readLessonIds }: { lessons: Lesson[]; read
             }`}
           >
             <span className="text-xs text-neutral-500">课文 {l.number}</span>
-            <span className="text-lg font-medium">
-              {l.title} {read ? "✓" : unlocked ? "" : "🔒"}
+            <span className="flex items-center gap-1 text-lg font-medium">
+              {l.title}
+              {read ? (
+                <Check className="size-4 text-success" aria-label="已读完" />
+              ) : unlocked ? null : (
+                <Lock className="size-4 text-neutral-400" aria-label="未解锁" />
+              )}
             </span>
           </div>
         );

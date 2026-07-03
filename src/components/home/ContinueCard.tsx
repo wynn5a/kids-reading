@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PartyPopper } from "lucide-react";
 import type { Lesson } from "@/data/types";
 import { Button } from "@/components/ui";
 
@@ -6,7 +7,10 @@ export function ContinueCard({ lesson }: { lesson: Lesson | null }) {
   if (!lesson) {
     return (
       <div className="cjk rounded-2xl bg-block-cream p-6">
-        <p className="text-lg font-medium">全部读完啦！🎉</p>
+        <p className="flex items-center gap-2 text-lg font-medium">
+          <PartyPopper className="size-6 text-primary" aria-hidden="true" />
+          全部读完啦！
+        </p>
         <p className="mt-1 text-neutral-600">你已经读完了所有课文。</p>
       </div>
     );
